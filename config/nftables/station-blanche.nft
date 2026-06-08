@@ -1,0 +1,31 @@
+#!/usr/sbin/nft -f
+flush ruleset
+
+define PROXY_IP = 192.168.50.1
+define PROXY_PORT = 3128
+
+table inet filter {
+  chain input {
+    type filter hook input priority 0;
+    policy drop;
+
+    iif lo accept
+    ct state established,related accept
+  }
+
+  chain output {
+    type filter hook output priority 0;
+    policy drop;
+
+    oif lo accept
+    ct state established,related accept
+
+    # Flux unique autorisé : station -> proxy
+    ip daddr $PROXY_IP tcp dport $PROXY_PORT accept
+  }
+
+  chain forward {
+    type filter hook forward priority 0;
+    policy drop;
+  }
+}

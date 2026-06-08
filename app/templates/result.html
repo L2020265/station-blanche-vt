@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Résultat — Station Blanche</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <main class="container">
+
+    <section class="card hero">
+      <div>
+        <p class="eyebrow">Résultat d'analyse</p>
+        {% if report.schema == 'station-blanche-bulk-report-v1' %}
+          <h1>Analyse du chemin : {{ report.path }}</h1>
+          <p class="muted">Job : {{ job_id }} — Fichiers analysés : {{ report.file_count }}</p>
+        {% else %}
+          <h1>{{ report.filename }}</h1>
+          <p class="muted">Job : {{ job_id }}</p>
+        {% endif %}
+      </div>
+      <div class="hero-actions">
+        <a class="button" href="/">Nouvelle analyse</a>
+        {% if allow_destructive %}
+          <form method="post" action="/delete_path" onsubmit="return confirm('Confirmer suppression du fichier ou volume ?')" style="display:inline-block;margin-left:10px;">
+            <input type="hidden" name="target_path" value="{{ report.path }}">
+            <button type="submit" class="secondary-button">Supprimer</button>
+          </form>
+        {% endif %}
+        {% if report.schema != 'station-blanche-bulk-report-v1' %}
+          <span class="verdict {{ report.verdict }}">{{ report.verdict|upper }}</span>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <h2>Résumé fichier</h2>
+        <ul class="clean">
+          <li><strong>SHA-256 :</strong> <code>{{ report.hashes.sha256 }}</code></li>
+          <li><strong>SHA-1 :</strong> <code>{{ report.hashes.sha1 }}</code></li>
+          <li><strong>MD5 :</strong> <code>{{ report.hashes.md5 }}</code></li>
+          <li><strong>Taille :</strong> {{ report.size }} octets</li>
+          <li><strong>Type :</strong> {{ report.local.file.stdout or "Non disponible" }}</li>
+          <li><strong>MIME :</strong> {{ report.local.file_mime.stdout or "Non disponible" }}</li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <h2>Verdict</h2>
+        {% if report.reasons %}
+          <ul>
+            {% for reason in report.reasons %}
+              <li>{{ reason }}</li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="muted">Aucun indicateur suspect détecté.</p>
+        {% endif %}
+
+        <div class="notice">
+          Un verdict <strong>sain</strong> signifie seulement qu’aucun indicateur connu n’a été détecté.
+          Cela ne garantit pas l’absence de menace.
+        </div>
+      </article>
+    </section>
+
+    <section class="card">
+      <h2>Analyse locale</h2>
+
+      <div class="analysis-grid">
+
+        <article class="mini-card">
+          {% if report.local.extra_scanner %}
+          <div class="mini-card-header">
+            <h3>{{ report.local.extra_scanner.name or 'Scanner secondaire' }}</h3>
+            {% if report.local.extra_scanner.returncode == 0 %}
+              <span class="badge ok">OK</span>
+            {% else %}
+              <span class="badge warn">Résultat</span>
+            {% endif %}
+          </div>
+          <ul class="clean">
+            <li><strong>Commande :</strong> <code>{{ report.local.extra_scanner.cmd | join(" ") }}</code></li>
+            <li><strong>Code retour :</strong> {{ report.local.extra_scanner.returncode }}</li>
+          </ul>
+
+          {% if report.local.extra_scanner.stdout %}
+            <details>
+              <summary>Sortie scanner secondaire</summary>
+              <pre>{{ report.local.extra_scanner.stdout }}</pre>
+            </details>
+          {% endif %}
+
+          {% if report.local.extra_scanner.stderr %}
+            <details>
+              <summary>Erreurs scanner secondaire</summary>
+              <pre>{{ report.local.extra_scanner.stderr }}</pre>
+            </details>
+          {% endif %}
+          {% endif %}
+          <div class="mini-card-header">
+            <h3>ClamAV</h3>
+            {% if report.local.clamav.returncode == 0 %}
+              <span class="badge ok">OK</span>
+            {% elif report.local.clamav.returncode == 1 %}
+              <span class="badge bad">Détection</span>
+            {% elif report.local.clamav.returncode == 127 %}
+              <span class="badge warn">Absent</span>
+            {% else %}
+              <span class="badge warn">Erreur</span>
+            {% endif %}
+          </div>
+
+          <ul class="clean">
+            <li><strong>Commande :</strong> <code>{{ report.local.clamav.cmd | join(" ") }}</code></li>
+            <li><strong>Code retour :</strong> {{ report.local.clamav.returncode }}</li>
+          </ul>
+
+          {% if report.local.clamav.stdout %}
+            <details open>
+              <summary>Résultat ClamAV</summary>
+              <pre>{{ report.local.clamav.stdout }}</pre>
+            </details>
+          {% else %}
+            <p class="muted">Aucune sortie standard ClamAV.</p>
+          {% endif %}
+
+          {% if report.local.clamav.stderr %}
+            <details>
+              <summary>Erreurs ClamAV</summary>
+              <pre>{{ report.local.clamav.stderr }}</pre>
+            </details>
+          {% endif %}
+        </article>
+
+        <article class="mini-card">
+          <div class="mini-card-header">
+            <h3>YARA</h3>
+            {% if report.local.yara.returncode == 0 and not report.local.yara.stdout %}
+              <span class="badge ok">OK</span>
+            {% elif report.local.yara.stdout %}
+              <span class="badge bad">Match</span>
+            {% elif report.local.yara.returncode == 127 %}
+              <span class="badge warn">Absent</span>
+            {% else %}
+              <span class="badge warn">Erreur</span>
+            {% endif %}
+          </div>
+
+          <ul class="clean">
+            <li><strong>Commande :</strong> <code>{{ report.local.yara.cmd | join(" ") }}</code></li>
+            <li><strong>Code retour :</strong> {{ report.local.yara.returncode }}</li>
+          </ul>
+
+          {% if report.local.yara.stdout %}
+            <details open>
+              <summary>Règles détectées</summary>
+              <pre>{{ report.local.yara.stdout }}</pre>
+            </details>
+          {% else %}
+            <p class="muted">Aucune règle YARA déclenchée.</p>
+          {% endif %}
+
+          {% if report.local.yara.stderr %}
+            <details>
+              <summary>Erreurs YARA</summary>
+              <pre>{{ report.local.yara.stderr }}</pre>
+            </details>
+          {% endif %}
+        </article>
+
+        <article class="mini-card">
+          <div class="mini-card-header">
+            <h3>Type de fichier</h3>
+            {% if report.local.file.returncode == 0 %}
+              <span class="badge ok">OK</span>
+            {% else %}
+              <span class="badge warn">Erreur</span>
+            {% endif %}
+          </div>
+
+          <ul class="clean">
+            <li><strong>file :</strong> {{ report.local.file.stdout or "Non disponible" }}</li>
+            <li><strong>MIME :</strong> {{ report.local.file_mime.stdout or "Non disponible" }}</li>
+            <li><strong>Code retour :</strong> {{ report.local.file.returncode }}</li>
+          </ul>
+
+          {% if report.local.file.stderr %}
+            <details>
+              <summary>Erreurs file</summary>
+              <pre>{{ report.local.file.stderr }}</pre>
+            </details>
+          {% endif %}
+        </article>
+
+        <article class="mini-card">
+          <div class="mini-card-header">
+            <h3>Métadonnées</h3>
+            {% if report.local.exiftool.returncode == 0 %}
+              <span class="badge ok">OK</span>
+            {% elif report.local.exiftool.returncode == 127 %}
+              <span class="badge warn">Absent</span>
+            {% else %}
+              <span class="badge warn">Erreur</span>
+            {% endif %}
+          </div>
+
+          <ul class="clean">
+            <li><strong>Commande :</strong> <code>{{ report.local.exiftool.cmd | join(" ") }}</code></li>
+            <li><strong>Code retour :</strong> {{ report.local.exiftool.returncode }}</li>
+          </ul>
+
+          {% if report.local.exiftool.stdout %}
+            <details>
+              <summary>Voir les métadonnées extraites</summary>
+              <pre>{{ report.local.exiftool.stdout }}</pre>
+            </details>
+          {% else %}
+            <p class="muted">Aucune métadonnée affichable ou outil absent.</p>
+          {% endif %}
+
+          {% if report.local.exiftool.stderr %}
+            <details>
+              <summary>Erreurs ExifTool</summary>
+              <pre>{{ report.local.exiftool.stderr }}</pre>
+            </details>
+          {% endif %}
+        </article>
+
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>VirusTotal</h2>
+
+      {% if report.virustotal.enabled %}
+        <div class="analysis-grid">
+          <article class="mini-card">
+            <div class="mini-card-header">
+              <h3>Statut VirusTotal</h3>
+              {% if report.virustotal.error %}
+                <span class="badge warn">Erreur</span>
+              {% elif report.virustotal.known %}
+                <span class="badge ok">Hash connu</span>
+              {% elif report.virustotal.known == false %}
+                <span class="badge warn">Hash inconnu</span>
+              {% else %}
+                <span class="badge warn">Indéterminé</span>
+              {% endif %}
+            </div>
+
+            <ul class="clean">
+              <li><strong>Hash connu :</strong> {{ report.virustotal.known }}</li>
+              <li><strong>Upload effectué :</strong> {{ report.virustotal.uploaded }}</li>
+              <li><strong>Erreur :</strong> {{ report.virustotal.error or "Aucune" }}</li>
+            </ul>
+          </article>
+
+          <article class="mini-card">
+            <div class="mini-card-header">
+              <h3>Score moteurs</h3>
+              {% if report.virustotal.stats %}
+                {% if report.virustotal.stats.malicious >= 5 %}
+                  <span class="badge bad">Malveillant</span>
+                {% elif report.virustotal.stats.malicious > 0 or report.virustotal.stats.suspicious > 0 %}
+                  <span class="badge warn">Suspect</span>
+                {% else %}
+                  <span class="badge ok">OK</span>
+                {% endif %}
+              {% else %}
+                <span class="badge warn">N/A</span>
+              {% endif %}
+            </div>
+
+            {% if report.virustotal.stats %}
+              <ul class="clean score-list">
+                <li><strong>Malicious :</strong> {{ report.virustotal.stats.malicious }}</li>
+                <li><strong>Suspicious :</strong> {{ report.virustotal.stats.suspicious }}</li>
+                <li><strong>Harmless :</strong> {{ report.virustotal.stats.harmless }}</li>
+                <li><strong>Undetected :</strong> {{ report.virustotal.stats.undetected }}</li>
+                <li><strong>Timeout :</strong> {{ report.virustotal.stats.timeout }}</li>
+              </ul>
+            {% else %}
+              <p class="muted">Aucune statistique VirusTotal disponible.</p>
+            {% endif %}
+          </article>
+        </div>
+      {% else %}
+        <p class="muted">VirusTotal non configuré.</p>
+      {% endif %}
+    </section>
+
+    <section class="card">
+      <h2>Chaînes extraites</h2>
+      {% if report.local.strings.stdout %}
+        <details>
+          <summary>Afficher les chaînes extraites</summary>
+          <pre>{{ report.local.strings.stdout }}</pre>
+        </details>
+      {% else %}
+        <p class="muted">Aucune chaîne affichable ou outil indisponible.</p>
+      {% endif %}
+    </section>
+
+    <section class="card">
+      <h2>Rapport complet</h2>
+      <details>
+        <summary>Détails techniques JSON</summary>
+        <pre>{{ report | tojson(indent=2) }}</pre>
+      </details>
+
+      <p>
+        <a href="{{ report_file }}">Télécharger le rapport JSON</a>
+      </p>
+
+      <p>
+        <a href="/">Nouvelle analyse</a>
+      </p>
+    </section>
+
+  </main>
+</body>
+</html>

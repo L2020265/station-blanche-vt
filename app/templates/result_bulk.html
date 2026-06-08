@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Résultat groupé — Station Blanche</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <main class="container">
+    <section class="card hero">
+      <div>
+        <p class="eyebrow">Résultat d'analyse groupée</p>
+        <h1>Analyse du chemin : {{ report.path }}</h1>
+        <p class="muted">Job : {{ job_id }} — Fichiers analysés : {{ report.file_count }}</p>
+      </div>
+      <div class="hero-actions">
+        <a class="button" href="/">Nouvelle analyse</a>
+        {% if allow_destructive %}
+          <form method="post" action="/delete_path" onsubmit="return confirm('Confirmer suppression du volume ?')" style="display:inline-block;margin-left:10px;">
+            <input type="hidden" name="target_path" value="{{ report.path }}">
+            <button type="submit" class="secondary-button">Supprimer</button>
+          </form>
+        {% endif %}
+      </div>
+
+    <section class="card">
+      <h2>Fichiers analysés</h2>
+      <table>
+        <thead>
+          <tr><th>Fichier</th><th>Verdict</th><th>SHA256</th><th>Taille</th></tr>
+        </thead>
+        <tbody>
+          {% for f in report.files %}
+            <tr>
+              <td>{{ f.filename }}</td>
+              <td>{{ f.verdict }}</td>
+              <td><code>{{ f.hashes.sha256 }}</code></td>
+              <td>{{ f.size }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    {% if report.local.rkhunter %}
+    <section class="card">
+      <h2>RKHunter (scan du volume)</h2>
+      <div class="mini-card">
+        <div class="mini-card-header">
+          <h3>rkhunter</h3>
+          {% if report.local.rkhunter.returncode == 0 %}
+            <span class="badge ok">OK</span>
+          {% else %}
+            <span class="badge warn">Résultat</span>
+          {% endif %}
+        </div>
+
+        <ul class="clean">
+          <li><strong>Commande :</strong> <code>{{ report.local.rkhunter.cmd | join(" ") }}</code></li>
+          <li><strong>Code retour :</strong> {{ report.local.rkhunter.returncode }}</li>
+        </ul>
+
+        {% if report.local.rkhunter.stdout %}
+          <details>
+            <summary>Sortie rkhunter</summary>
+            <pre>{{ report.local.rkhunter.stdout }}</pre>
+          </details>
+        {% endif %}
+
+        {% if report.local.rkhunter.stderr %}
+          <details>
+            <summary>Erreurs rkhunter</summary>
+            <pre>{{ report.local.rkhunter.stderr }}</pre>
+          </details>
+        {% endif %}
+      </div>
+    </section>
+    {% endif %}
+
+    <section class="card">
+      <h2>Rapport complet</h2>
+      <p>
+        <a href="{{ report_file }}">Télécharger le rapport JSON</a>
+      </p>
+    </section>
+  </main>
+</body>
+</html>

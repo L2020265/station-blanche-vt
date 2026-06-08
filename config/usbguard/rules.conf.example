@@ -1,0 +1,7 @@
+# Exemple uniquement. Générer d'abord une politique adaptée :
+# usbguard generate-policy > /etc/usbguard/rules.conf
+
+# Autoriser clavier/souris connus, puis bloquer le reste.
+# allow id 046d:c31c name "USB Keyboard" with-interface 03:01:01
+# allow id 046d:c077 name "USB Mouse" with-interface 03:01:02
+block

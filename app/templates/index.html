@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Station Blanche</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <main class="container">
+    <section class="card hero">
+      <div>
+        <p class="eyebrow">Analyse locale sécurisée</p>
+        <h1>Station Blanche</h1>
+        <p class="muted">Déposez un fichier suspect, sélectionnez un dossier ou utilisez un chemin serveur pour analyser un volume.</p>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Choisissez ce que vous souhaitez analyser</h2>
+      <div class="form-grid">
+        <div class="form-column">
+          <div class="radio-group">
+            <label class="radio-inline">
+              <input type="radio" name="source" value="upload_file" id="src_upload_file" checked>
+              <span>Fichier</span>
+            </label>
+            <label class="radio-inline">
+              <input type="radio" name="source" value="upload_folder" id="src_upload_folder">
+              <span>Dossier</span>
+            </label>
+            <label class="radio-inline">
+              <input type="radio" name="source" value="server" id="src_server">
+              <span>Chemin</span>
+            </label>
+          </div>
+
+          <form id="uploadFileForm" method="post" action="/analyze" enctype="multipart/form-data" class="section-form">
+            <label class="dropzone">
+              <input type="file" name="files" id="fileInputSingle" required>
+              <span>Sélectionner un fichier</span>
+            </label>
+
+           
+
+            <label class="checkbox">
+              <input type="checkbox" name="allow_vt_upload" value="yes" id="upload_allow_vt">
+              Autoriser l'upload complet vers VirusTotal si le hash est inconnu
+               <div class="notice">
+              <strong>Confidentialité :</strong> l'upload complet vers VirusTotal peut exposer le fichier. La recherche par hash est effectuée en priorité.
+            </div>
+            </label>
+
+            <button type="submit">Lancer l'analyse</button>
+          </form>
+
+          <form id="uploadFolderForm" method="post" action="/analyze" enctype="multipart/form-data" class="section-form" style="display:none;">
+            <label class="dropzone">
+              <input type="file" name="files" id="fileInputFolder" webkitdirectory directory multiple>
+              <span>Sélectionner un dossier</span>
+            </label>
+
+         
+
+            <label class="checkbox">
+              <input type="checkbox" name="allow_vt_upload" value="yes" id="upload_allow_vt_folder">
+              Autoriser l'upload complet vers VirusTotal si le hash est inconnu
+                 <div class="notice">
+              <strong>Confidentialité :</strong> l'upload d'un dossier transfèrera tous les fichiers sélectionnés pour analyse avec VirusTotal.
+            </div>
+            </label>
+
+            <button type="submit">Lancer l'analyse du dossier</button>
+          </form>
+
+          <form id="pathForm" method="post" action="/analyze_path" class="section-form" style="display:none;">
+            <label class="field-label">Chemin sur le serveur (ex: /media/usb0 ou C:\\)</label>
+            <input type="text" name="target_path" id="serverPathInput" placeholder="/path/to/volume" autocomplete="off">
+
+            <label class="checkbox">
+              <input type="checkbox" name="allow_vt_upload" value="yes" id="path_allow_vt">
+              Autoriser l'upload complet vers VirusTotal si le hash est inconnu
+            </label>
+
+            <button type="submit">Lancer l'analyse du chemin</button>
+          </form>
+
+          {% if extra_scanner_enabled %}
+            <p class="muted">Scanner secondaire configuré : {{ extra_scanner_name or 'extra' }}</p>
+          {% endif %}
+        </div>
+
+        <div class="actions-column">
+          <div class="action-card">
+            <h3>Actions rapides</h3>
+            <p class="muted">Entrez un chemin serveur pour supprimer ou formater un volume/dossier.</p>
+            <form id="deleteForm" method="post" action="/delete_path">
+              <input type="hidden" name="target_path" id="delete_target">
+              <button type="submit" class="secondary-button" onclick="return confirm('Confirmer suppression ?')">Supprimer</button>
+            </form>
+
+            {% if allow_destructive %}
+            <form id="formatForm" method="post" action="/format_path">
+              <input type="hidden" name="target_path" id="format_target">
+              <button type="submit" class="secondary-button" onclick="return confirm('Confirmer formatage ?')">Formater</button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <script>
+        const srcUploadFile = document.getElementById('src_upload_file');
+        const srcUploadFolder = document.getElementById('src_upload_folder');
+        const srcServer = document.getElementById('src_server');
+        const uploadFileForm = document.getElementById('uploadFileForm');
+        const uploadFolderForm = document.getElementById('uploadFolderForm');
+        const pathForm = document.getElementById('pathForm');
+        const serverPathInput = document.getElementById('serverPathInput');
+        const deleteTarget = document.getElementById('delete_target');
+        const formatTarget = document.getElementById('format_target');
+
+        function updateSource() {
+          uploadFileForm.style.display = srcUploadFile.checked ? '' : 'none';
+          uploadFolderForm.style.display = srcUploadFolder.checked ? '' : 'none';
+          pathForm.style.display = srcServer.checked ? '' : 'none';
+        }
+
+        srcUploadFile.addEventListener('change', updateSource);
+        srcUploadFolder.addEventListener('change', updateSource);
+        srcServer.addEventListener('change', updateSource);
+
+        function syncTargets() {
+          const value = serverPathInput ? serverPathInput.value : '';
+          if (deleteTarget) deleteTarget.value = value;
+          if (formatTarget) formatTarget.value = value;
+        }
+
+        document.getElementById('deleteForm').addEventListener('submit', syncTargets);
+        if (document.getElementById('formatForm')) {
+          document.getElementById('formatForm').addEventListener('submit', syncTargets);
+        }
+
+        if (serverPathInput) {
+          serverPathInput.addEventListener('input', syncTargets);
+        }
+
+        updateSource();
+        syncTargets();
+      </script>
+    </section>
+  </main>
+</body>
+</html>

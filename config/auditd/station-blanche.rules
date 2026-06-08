@@ -1,0 +1,6 @@
+-w /srv/station-blanche/uploads -p wa -k station_upload
+-w /srv/station-blanche/jobs -p wa -k station_jobs
+-w /srv/station-blanche/reports -p wa -k station_reports
+-w /etc/station-blanche/vt.env -p wa -k station_vt_config
+-w /usr/bin/clamscan -p x -k station_clamav
+-w /usr/bin/yara -p x -k station_yara
