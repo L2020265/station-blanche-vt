@@ -102,7 +102,7 @@ def main():
     # Télécharger les règles
     total_rules = 0
     for source_name, source_info in YARA_SOURCES.items():
-        count = download_rules(source_name, source_info)
+        count = int(download_rules(source_name, source_info))
         total_rules += int(count)
     
     # Lister les règles disponibles
