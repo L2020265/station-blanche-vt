@@ -81,11 +81,13 @@ class AnalysisEngine:
         report["local"]["exiftool"] = run_cmd(["exiftool", "-json", str(path)], timeout=self.settings.command_timeout)
         report["local"]["strings"] = run_cmd(["strings", "-a", "-n", "8", str(path)], timeout=self.settings.command_timeout, max_stdout=30000)
 
-        yara_index = self.settings.rules_dir / "index.yar"
-        if yara_index.exists():
-            report["local"]["yara"] = run_cmd(["yara", str(yara_index), str(path)], timeout=180)
+        # Scanner YARA - simple, direct sur le dossier des règles
+        yara_rules_dir = self.settings.rules_dir / "malware"
+        if yara_rules_dir.exists():
+            # Scan récursif du dossier malware sans index.yar
+            report["local"]["yara"] = run_cmd(["yara", "-r", str(yara_rules_dir), str(path)], timeout=180)
         else:
-            report["local"]["yara"] = {"cmd": ["yara"], "returncode": 0, "stdout": "", "stderr": "index.yar absent"}
+            report["local"]["yara"] = {"cmd": ["yara", "-r", str(yara_rules_dir)], "returncode": 0, "stdout": "", "stderr": "Dossier malware absent"}
 
         # Secondary scanner (configurable)
         if self.settings.extra_scanner_cmd:
