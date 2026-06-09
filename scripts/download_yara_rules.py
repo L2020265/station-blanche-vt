@@ -19,9 +19,9 @@ YARA_SOURCES = {
         "enabled": True
     },
     "community": {
-        "url": "https://github.com/0xe4/malware_hunting.git",
+        "url": "",
         "path": ".",
-        "enabled": True
+        "enabled": False
     }
 }
 
