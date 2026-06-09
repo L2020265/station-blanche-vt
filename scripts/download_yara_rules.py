@@ -53,18 +53,25 @@ def download_rules(source_name, source_info):
     
     print(f"📥 Téléchargement {source_name}...")
     
+    # Vérifier si le repo existe déjà
+    is_existing = (source_dir / ".git").exists()
+    
     # Si le dossier existe, mettre à jour; sinon, cloner
-    if (source_dir / ".git").exists():
+    if is_existing:
+        print(f"   Mise à jour (repo existant)...")
         result = subprocess.run(
-            ["git", "-C", str(source_dir), "pull"],
+            ["git", "-C", str(source_dir), "pull", "--quiet"],
             capture_output=True,
-            text=True
+            text=True,
+            timeout=60
         )
     else:
+        print(f"   Clonage du repo...")
         result = subprocess.run(
-            ["git", "clone", source_info["url"], str(source_dir)],
+            ["git", "clone", "--depth", "1", source_info["url"], str(source_dir)],
             capture_output=True,
-            text=True
+            text=True,
+            timeout=120
         )
     
     if result.returncode == 0:
@@ -102,8 +109,8 @@ def main():
     # Télécharger les règles
     total_rules = 0
     for source_name, source_info in YARA_SOURCES.items():
-        count = int(download_rules(source_name, source_info))
-        total_rules += int(count)
+        count = download_rules(source_name, source_info)
+        total_rules += count
     
     # Lister les règles disponibles
     list_available_rules()
