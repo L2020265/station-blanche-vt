@@ -23,6 +23,10 @@ class VirusTotalClient:
             r = requests.get(f"{VT_BASE}/files/{sha256}", headers=self._headers(), timeout=30)
             if r.status_code == 404:
                 return {"enabled": True, "known": False, "uploaded": False, "stats": None, "raw": None, "error": None}
+            if r.status_code == 429:
+                return {"enabled": True, "known": None, "uploaded": False, "stats": None, "raw": None, "error": "Limite de requêtes atteinte"}
+            if r.status_code != 200:
+                return {"enabled": True, "known": None, "uploaded": False, "stats": None, "raw": None, "error": f"Erreur HTTP {r.status_code}"}
             r.raise_for_status()
             data = r.json()
             stats = data.get("data", {}).get("attributes", {}).get("last_analysis_stats", {})
