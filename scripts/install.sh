@@ -29,7 +29,7 @@ mkdir -p /etc/station-blanche /var/log/station-blanche
 rsync -a --delete "$APP_SRC/app/" "$APP_DST/"
 rsync -a --delete "$APP_SRC/analyzer/" "$BASE/analyzer/"
 rsync -a --delete "$APP_SRC/rules/" "$BASE/rules/"
-rsync -a "$APP_SRC/scripts/download_yara_simple.py" "$BASE/scripts/"
+rsync -a "$APP_SRC/scripts/download_yara_simple.py" "$BASE/scripts/" 2>/dev/null || true
 
 python3 -m venv "$APP_DST/venv"
 "$APP_DST/venv/bin/pip" install --upgrade pip
