@@ -1,0 +1,9 @@
+# Maintenance automatique des règles YARA
+# À installer : crontab -e (en tant que root)
+# Puis copier-coller les lignes ci-dessous
+
+# Mise à jour des règles YARA tous les jours à 2h du matin
+0 2 * * * cd /srv/station-blanche && python3 scripts/maintain_yara_rules.py >> /var/log/station-blanche/yara-maintenance.log 2>&1
+
+# Nettoyage des anciens logs (optionnel)
+# 0 3 * * 0 find /var/log/station-blanche -name "yara-maintenance.log*" -mtime +30 -delete

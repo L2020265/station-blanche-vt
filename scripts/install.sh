@@ -29,6 +29,11 @@ mkdir -p /etc/station-blanche /var/log/station-blanche
 rsync -a --delete "$APP_SRC/app/" "$APP_DST/"
 rsync -a --delete "$APP_SRC/analyzer/" "$BASE/analyzer/"
 rsync -a --delete "$APP_SRC/rules/" "$BASE/rules/"
+rsync -a "$APP_SRC/scripts/download_yara_rules.py" "$BASE/scripts/"
+rsync -a "$APP_SRC/scripts/deduplicate_yara.py" "$BASE/scripts/"
+rsync -a "$APP_SRC/scripts/generate_safe_yara_index.py" "$BASE/scripts/"
+rsync -a "$APP_SRC/scripts/fix_yara_duplicates.py" "$BASE/scripts/"
+rsync -a "$APP_SRC/scripts/maintain_yara_rules.py" "$BASE/scripts/"
 
 python3 -m venv "$APP_DST/venv"
 "$APP_DST/venv/bin/pip" install --upgrade pip
