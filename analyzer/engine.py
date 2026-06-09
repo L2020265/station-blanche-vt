@@ -83,7 +83,7 @@ class AnalysisEngine:
 
         yara_index = self.settings.rules_dir / "index.yar"
         if yara_index.exists():
-            report["local"]["yara"] = run_cmd(["yara", "-r", str(yara_index), str(path)], timeout=180)
+            report["local"]["yara"] = run_cmd(["yara", str(yara_index), str(path)], timeout=180)
         else:
             report["local"]["yara"] = {"cmd": ["yara"], "returncode": 0, "stdout": "", "stderr": "index.yar absent"}
 
