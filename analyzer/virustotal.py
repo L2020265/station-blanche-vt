@@ -3,6 +3,9 @@ import requests
 import time
 import os
 
+
+requests.packages.urllib3.util.connection.HAS_IPV6 = False
+
 VT_BASE = "https://www.virustotal.com/api/v3"
 
 class VirusTotalClient:
@@ -31,8 +34,12 @@ class VirusTotalClient:
             data = r.json()
             stats = data.get("data", {}).get("attributes", {}).get("last_analysis_stats", {})
             return {"enabled": True, "known": True, "uploaded": False, "stats": stats, "raw": data, "error": None}
+        except requests.exceptions.ConnectionError as e:
+            return {"enabled": True, "known": None, "uploaded": False, "stats": None, "raw": None, "error": f"Erreur de connexion: {str(e)[:100]}"}
+        except requests.exceptions.Timeout:
+            return {"enabled": True, "known": None, "uploaded": False, "stats": None, "raw": None, "error": "Timeout VirusTotal"}
         except Exception as e:
-            return {"enabled": True, "known": None, "uploaded": False, "stats": None, "raw": None, "error": str(e)}
+            return {"enabled": True, "known": None, "uploaded": False, "stats": None, "raw": None, "error": f"Erreur VT: {str(e)[:100]}"}
 
     def upload_file(self, path: Path) -> dict:
         if not self.enabled:
@@ -45,8 +52,12 @@ class VirusTotalClient:
             data = r.json()
             analysis_id = data.get("data", {}).get("id")
             return {"enabled": True, "uploaded": True, "analysis_id": analysis_id, "raw_upload": data, "error": None}
+        except requests.exceptions.ConnectionError as e:
+            return {"enabled": True, "uploaded": False, "analysis_id": None, "raw_upload": None, "error": f"Erreur de connexion: {str(e)[:100]}"}
+        except requests.exceptions.Timeout:
+            return {"enabled": True, "uploaded": False, "analysis_id": None, "raw_upload": None, "error": "Timeout upload VirusTotal"}
         except Exception as e:
-            return {"enabled": True, "uploaded": False, "analysis_id": None, "raw_upload": None, "error": str(e)}
+            return {"enabled": True, "uploaded": False, "analysis_id": None, "raw_upload": None, "error": f"Erreur upload: {str(e)[:100]}"}
 
     def get_analysis(self, analysis_id: str) -> dict:
         if not self.enabled:
@@ -55,5 +66,9 @@ class VirusTotalClient:
             r = requests.get(f"{VT_BASE}/analyses/{analysis_id}", headers=self._headers(), timeout=30)
             r.raise_for_status()
             return r.json()
+        except requests.exceptions.ConnectionError as e:
+            return {"error": f"Erreur de connexion: {str(e)[:100]}"}
+        except requests.exceptions.Timeout:
+            return {"error": "Timeout"}
         except Exception as e:
-            return {"error": str(e)}
+            return {"error": f"Erreur: {str(e)[:100]}"}
