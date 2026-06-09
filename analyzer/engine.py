@@ -82,7 +82,7 @@ class AnalysisEngine:
         report["local"]["strings"] = run_cmd(["strings", "-a", "-n", "8", str(path)], timeout=self.settings.command_timeout, max_stdout=30000)
 
         # Scanner YARA - simple et direct
-        yara_rules_dir = self.settings.rules_dir / "malware"
+        yara_rules_dir = self.settings.rules_dir / "malware/index.yar"
         if yara_rules_dir.exists():
             report["local"]["yara"] = run_cmd(["yara", "-r", str(yara_rules_dir), str(path)], timeout=180)
         else:
