@@ -103,7 +103,7 @@ def main():
     total_rules = 0
     for source_name, source_info in YARA_SOURCES.items():
         count = download_rules(source_name, source_info)
-        total_rules += count
+        total_rules += int(count)
     
     # Lister les règles disponibles
     list_available_rules()
