@@ -18,15 +18,10 @@ YARA_SOURCES = {
         "path": "malware",
         "enabled": True
     },
-    "webshells": {
-        "url": "https://github.com/reversinglabs/reversinglabs-yara-rules.git",
-        "path": "webshells",
-        "enabled": True
-    },
     "community": {
         "url": "https://github.com/0xe4/malware_hunting.git",
         "path": ".",
-        "enabled": False
+        "enabled": True
     }
 }
 
