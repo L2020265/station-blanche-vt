@@ -25,6 +25,7 @@ def main():
     
     scripts = [
         ("download_yara_rules.py", [], "Téléchargement des règles depuis GitHub"),
+        ("cleanup_nested_indexes.py", [], "Suppression des index.yar imbriqués"),
         ("deduplicate_yara.py", ["clean"], "Suppression des fichiers dupliqués"),
         ("generate_safe_yara_index.py", [], "Génération sécurisée de l'index YARA (gère les doublons)"),
     ]

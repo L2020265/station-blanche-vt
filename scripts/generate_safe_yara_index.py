@@ -33,17 +33,20 @@ def extract_rule_name_and_content(file_path):
 def generate_safe_yara_index(rules_dir):
     """
     Génère un index YARA sûr avec renommage automatique des doublons
+    Exclut les index.yar des sous-dossiers pour éviter les conflits
     """
     rules_dir = Path(rules_dir)
     index_file = rules_dir / "index.yar"
     
-    # Trouver tous les fichiers YARA
+    # Trouver tous les fichiers YARA (EXCLURE les index.yar dans les sous-dossiers)
     yara_files = []
     for ext in ["*.yar", "*.yara"]:
-        yara_files.extend(sorted(rules_dir.rglob(ext)))
-    
-    # Exclure index.yar lui-même
-    yara_files = [f for f in yara_files if f.name != "index.yar"]
+        for f in sorted(rules_dir.rglob(ext)):
+            # Exclure les index.yar (au niveau racine ou sub-dossiers)
+            if f.name == "index.yar":
+                print(f"⊘ Exclusion: {f.relative_to(rules_dir)} (index local)")
+                continue
+            yara_files.append(f)
     
     print(f"📝 Génération d'index YARA sûr")
     print(f"   Fichiers trouvés: {len(yara_files)}")
