@@ -4,7 +4,7 @@ import time
 import os
 
 
-requests.packages.urllib3.util.connection.HAS_IPV6 = False
+# requests.packages.urllib3.util.connection.HAS_IPV6 = False
 
 VT_BASE = "https://www.virustotal.com/api/v3"
 
@@ -28,8 +28,6 @@ class VirusTotalClient:
                 return {"enabled": True, "known": False, "uploaded": False, "stats": None, "raw": None, "error": None}
             if r.status_code == 429:
                 return {"enabled": True, "known": None, "uploaded": False, "stats": None, "raw": None, "error": "Limite de requêtes atteinte"}
-            if r.status_code != 200:
-                return {"enabled": True, "known": None, "uploaded": False, "stats": None, "raw": None, "error": f"Erreur HTTP {r.status_code}"}
             r.raise_for_status()
             data = r.json()
             stats = data.get("data", {}).get("attributes", {}).get("last_analysis_stats", {})
